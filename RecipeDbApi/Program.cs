@@ -468,31 +468,6 @@ app.MapPost("/category", [Authorize] async (string category, HttpContext context
 			return Results.BadRequest();
 		}
 	}
-
-	CategoryEntity categoryEntity;
-	try
-	{
-		using (DataAccessAdapter adapter = new())
-		{
-			var q = qf.Category.Where(CategoryFields.Name == category);
-			categoryEntity = await adapter.FetchFirstAsync(q);
-
-			if (categoryEntity != null)
-				categoryEntity.IsActive = true;
-			else
-				categoryEntity = new CategoryEntity();
-				categoryEntity.Name = category;
-
-			if (await adapter.SaveEntityAsync(categoryEntity))
-				return Results.Created($"/category/{category}", category);
-			else
-				return Results.BadRequest();
-		}
-	}
-	catch (Exception)
-	{
-		return Results.BadRequest();
-	}
 });
 
 app.MapDelete("/categories/{category}", [Authorize] async (string category, HttpContext context, IAntiforgery forgeryService) =>
@@ -517,11 +492,11 @@ app.MapDelete("/categories/{category}", [Authorize] async (string category, Http
 			if (!await adapter.SaveEntityAsync(categoryEntity))
 				throw new Exception("Could Not Save");
 
-			EntityCollection<RecipeCategoryDictionaryEntity> recipeCategoryDictionaryEntities = new();
+			EntityCollection<RecipeCategoryEntity> recipeCategoryDictionaryEntities = new();
 			var qp = new QueryParameters()
 			{
 				CollectionToFetch = recipeCategoryDictionaryEntities,
-				FilterToUse = RecipeCategoryDictionaryFields.CategoryName == category
+				FilterToUse = RecipeCategoryFields.CategoryName == category
 			};
 			await adapter.FetchEntityCollectionAsync(qp, CancellationToken.None);
 			await adapter.DeleteEntityCollectionAsync(recipeCategoryDictionaryEntities);
