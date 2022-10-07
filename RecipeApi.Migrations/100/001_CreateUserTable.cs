@@ -6,13 +6,14 @@ using System.Threading.Tasks;
 using FluentMigrator;
 namespace RecipeApi.Migrations.Migrations
 {
-    [Migration(3)]
-    public class _003_CreateTableUser : AutoReversingMigration
+    [Migration(1)]
+    public class _001_CreateUserTable : AutoReversingMigration
     {
         public override void Up()
         {
-            Create.Table("User")
-            .WithColumn("Username").AsString().PrimaryKey()
+            Create.Table(Tables.User)
+            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+            .WithColumn("Username").AsString().Unique()
             .WithColumn("Password").AsString().NotNullable()
             .WithColumn("RefreshToken").AsString().Unique();
         }

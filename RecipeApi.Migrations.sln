@@ -3,9 +3,19 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32526.322
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecipeApi.Migrations", "RecipeApi.Migrations\RecipeApi.Migrations.csproj", "{CCA13242-C764-43BA-8CC4-552326C38F45}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RecipeApi.Migrations", "RecipeApi.Migrations\RecipeApi.Migrations.csproj", "{CCA13242-C764-43BA-8CC4-552326C38F45}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecipeDbApi", "RecipeDbApi\RecipeDbApi.csproj", "{2FB6047D-6534-4876-8A20-83A4696E39DB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RecipeDbApi", "RecipeDbApi\RecipeDbApi.csproj", "{2FB6047D-6534-4876-8A20-83A4696E39DB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Data", "Data", "{A2C6E8B3-E47C-47B1-A392-C2817F5D0D61}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataProject", "..\Data\Code\DatabaseGeneric\DataProject.csproj", "{C8A41D40-A95F-42B8-B66D-9B93F5488926}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Recipe.DataDBSpecific", "..\Data\Code\DatabaseSpecific\Recipe.DataDBSpecific.csproj", "{AC4490A9-7111-49E6-84D3-1C58B5CF122D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Views", "..\Data\Code\Views\Views.csproj", "{EBDB6BAA-1A08-4048-A346-605B0F1302EA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Views.Persistence", "..\Data\Code\Views.Persistence\Views.Persistence.csproj", "{7531B566-8A34-4D3B-932C-6F4202B58E6F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,9 +31,30 @@ Global
 		{2FB6047D-6534-4876-8A20-83A4696E39DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2FB6047D-6534-4876-8A20-83A4696E39DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2FB6047D-6534-4876-8A20-83A4696E39DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8A41D40-A95F-42B8-B66D-9B93F5488926}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8A41D40-A95F-42B8-B66D-9B93F5488926}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8A41D40-A95F-42B8-B66D-9B93F5488926}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8A41D40-A95F-42B8-B66D-9B93F5488926}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC4490A9-7111-49E6-84D3-1C58B5CF122D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC4490A9-7111-49E6-84D3-1C58B5CF122D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC4490A9-7111-49E6-84D3-1C58B5CF122D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC4490A9-7111-49E6-84D3-1C58B5CF122D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBDB6BAA-1A08-4048-A346-605B0F1302EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBDB6BAA-1A08-4048-A346-605B0F1302EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBDB6BAA-1A08-4048-A346-605B0F1302EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBDB6BAA-1A08-4048-A346-605B0F1302EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7531B566-8A34-4D3B-932C-6F4202B58E6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7531B566-8A34-4D3B-932C-6F4202B58E6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7531B566-8A34-4D3B-932C-6F4202B58E6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7531B566-8A34-4D3B-932C-6F4202B58E6F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CCA13242-C764-43BA-8CC4-552326C38F45} = {A2C6E8B3-E47C-47B1-A392-C2817F5D0D61}
+		{C8A41D40-A95F-42B8-B66D-9B93F5488926} = {A2C6E8B3-E47C-47B1-A392-C2817F5D0D61}
+		{AC4490A9-7111-49E6-84D3-1C58B5CF122D} = {A2C6E8B3-E47C-47B1-A392-C2817F5D0D61}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BD060538-5742-4197-8A9D-A4C983D712E1}
