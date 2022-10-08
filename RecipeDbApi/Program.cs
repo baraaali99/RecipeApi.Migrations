@@ -13,17 +13,20 @@ using System.Text.Json;
 using System.Data;
 using SD.LLBLGen.Pro.DQE.SqlServer;
 using System.Security.Claims;
-using Recipe.Data.FactoryClasses;
-using Recipe.Data.EntityClasses;
-using Recipe.Data.HelperClasses;
 using SD.LLBLGen.Pro.QuerySpec;
 using SD.LLBLGen.Pro.QuerySpec.Adapter;
 using SD.LLBLGen.Pro.LinqSupportClasses;
-using Recipe.Data;
-using Recipe.Data.DatabaseSpecific;
-using Recipe.Data.Linq;
-using Views;
-using Views.Persistence;
+using Shop.Data;
+using Shop.Data.FactoryClasses;
+using Shop.Data.EntityClasses;
+using Shop.Data.DatabaseSpecific;
+using Shop.Data.HelperClasses;
+using Shop.Data.Linq;
+using View.Persistence;
+using Npgsql;
+using System.Data.SqlClient;
+using System.Diagnostics;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // services
@@ -96,6 +99,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // configure LLBLGen pro
+ConfigureLLBLGen(builder.Services, builder.Configuration);
 RuntimeConfiguration.AddConnectionString(app.Configuration["Key"],
 									app.Configuration["ConnectionString"]);
 
@@ -278,8 +282,8 @@ app.MapPost("/recipes", [Authorize] async (RecipeInput recipe, HttpContext conte
 			var recipeEntity = new RecipeEntity()
 			{
 				Title = recipe.Title,
-				InstructionId = recipe.Instructions,
-				IngredientId = recipe.Ingredients,
+				InstructionId = recipe.InstructionsId,
+				IngredientId = recipe.IngredientsId,
 				IsNew = true
 			};
 
@@ -311,115 +315,72 @@ app.MapPost("/recipes", [Authorize] async (RecipeInput recipe, HttpContext conte
 	}
 });
 
-/*app.MapDelete("/recipes/{id}", [Authorize] async (int id, HttpContext context, IAntiforgery forgeryService) =>
+app.MapDelete("/recipes/{id}", [Authorize] async (int id, HttpContext context, IAntiforgery forgeryService) =>
+{
+    ////await forgeryService.ValidateRequestAsync(context);
+
+    try
+    {
+		var adapter = new DataAccessAdapter();
+		await adapter.StartTransactionAsync(IsolationLevel.ReadUncommitted, "Delete Recipe");
+		var recipe = new RecipeEntity()
+		{
+			Id = id,
+			IsNew = false,
+			IsActive = false
+		};
+
+		await adapter.SaveEntityAsync(recipe, true);
+		adapter.Commit(); return Results.Ok();
+    }
+    catch (Exception)
+    {
+		return Results.BadRequest();
+    }
+});
+
+app.MapPut("/recipes/{id}", [Authorize] async (RecipeInput recipeInput, HttpContext context, IAntiforgery forgeryService) =>
 {
 	////await forgeryService.ValidateRequestAsync(context);
 
 	using (DataAccessAdapter adapter = new())
 	{
-		RecipeEntity recipeEntity;
+		adapter.StartTransaction(IsolationLevel.ReadUncommitted, "Put Recipe");
 		try
 		{
-			var meta = new LinqMetaData(adapter);
-			//var result = await meta.Recipe.Where(x => x.Id == id);
-			var q = qf.Recipe.Where(RecipeFields.Id == id);
-			recipeEntity = await adapter.FetchFirstAsync(q);
-			if (recipeEntity == null)
-				return Results.NotFound();
-			recipeEntity.IsActive = false;
-			if (!await adapter.SaveEntityAsync(recipeEntity))
-				throw new Exception("Could Not Save");
-			return Results.Ok(RecipeEntityToModel(recipeEntity));
-		}
-		catch (Exception)
-		{
-			return Results.NotFound();
-		}
-		
-	}
-});*/
+			var meta = new LinqMetaData();
+			var categories = new EntityCollection<RecipeCategoryEntity>();
+			var categoryList = await meta.RecipeCategory.Where(x => x.IsActive && x.RecipeId == recipeInput.Id).ToListAsync();
 
-/*app.MapPut("/recipes/{id}", [Authorize] async (RecipeInput editedRecipe, HttpContext context, IAntiforgery forgeryService) =>
-{
-	////await forgeryService.ValidateRequestAsync(context);
-
-	using (DataAccessAdapter adapter = new())
-	{
-		adapter.StartTransaction(IsolationLevel.ReadCommitted, "Insert Recipe");
-		try
-		{
-			RecipeEntity recipeEntity;
-			var q = qf.Recipe.Where(x=>x.Id == editedRecipe.Id);
-			recipeEntity = await adapter.FetchFirstAsync(q);
-			if (recipeEntity == null || !recipeEntity.IsActive)
-				return Results.NotFound();
-
-			// delete old recipe related entities
-			await adapter.FetchEntityCollectionAsync(new()
-			{
-				CollectionToFetch = recipeEntity.Ingredients,
-				FilterToUse = IngredientFields.RecipeId == editedRecipe.Id
-			},
-			CancellationToken.None);
-			await adapter.DeleteEntityCollectionAsync(recipeEntity.Ingredients);
-			await adapter.FetchEntityCollectionAsync(new()
-			{
-				CollectionToFetch = recipeEntity.Instructions,
-				FilterToUse = InstructionFields.RecipeId == editedRecipe.Id
-			},
-			CancellationToken.None);
-			await adapter.DeleteEntityCollectionAsync(recipeEntity.Instructions);
-			await adapter.FetchEntityCollectionAsync(new()
-			{
-				CollectionToFetch = recipeEntity.RecipeCategoryDictionaries,
-				FilterToUse = RecipeCategoryDictionaryFields.RecipeId == editedRecipe.Id
-			},
-			CancellationToken.None);
-			await adapter.DeleteEntityCollectionAsync(recipeEntity.RecipeCategoryDictionaries);
-
-			// create instruction entities
-			foreach (var instruction in editedRecipe.Instructions)
-			{
-				var instructionEntity = new InstructionEntity
-				{
-					Id = Guid.NewGuid(),
-					Text = instruction,
-					Recipe = recipeEntity
-				};
+			foreach (var categoryId in recipeInput.Categories)
+            {
+				if(!categoryList.Any(x => x.Id == categoryId))
+                {
+					var category = new RecipeCategoryEntity()
+					{
+						CategoryId = categoryId,
+						RecipeId = recipeInput.Id,
+						IsNew = true
+					};
+					categories.Add(category);
+				}
 			}
 
-			// create ingredient entities
-			foreach (var ingredient in editedRecipe.Ingredients)
+			await adapter.SaveEntityCollectionAsync(categories);
+
+			var entity = new RecipeEntity()
 			{
-				var ingredientEntity = new IngredientEntity
-				{
-					Id = Guid.NewGuid(),
-					Name = ingredient,
-					Recipe = recipeEntity
-				};
-			}
+				Title = recipeInput.Title,
+				Id = recipeInput.Id,
+				IngredientId = recipeInput.IngredientsId,
+				InstructionId = recipeInput.InstructionsId,
+				IsNew = false
+			};
 
-			// create recipeCategoryDictionary entities
-			foreach (var category in editedRecipe.Categories)
-			{
-				var categoryEntity = new CategoryEntity(category);
-				var q2 = qf.Category.Where(CategoryFields.Name == category);
-				categoryEntity = await adapter.FetchFirstAsync(q2);
-				if (categoryEntity == null)
-					throw new Exception();
+			await adapter.SaveEntityAsync(entity);
 
-				var recipeCategoryDictionaryEntity = new RecipeCategoryDictionaryEntity()
-				{
-					Recipe = recipeEntity,
-					Category = categoryEntity
-				};
-			}
-
-			// Save all entities recursively
-			if (!await adapter.SaveEntityAsync(recipeEntity))
-				throw new Exception();
-			adapter.Commit();
-			return Results.Created($"/recipes/{editedRecipe.Id}", editedRecipe);
+			adapter.Commit(); 
+			return Results.Ok(entity);
 		}
 		catch (Exception)
 		{
@@ -428,7 +389,7 @@ app.MapPost("/recipes", [Authorize] async (RecipeInput recipe, HttpContext conte
 			return Results.BadRequest();
 		}
 	}
-});*/
+});
 
 // category endpoints
 app.MapGet("/categories", [Authorize] async (HttpContext context, IAntiforgery forgeryService) =>
@@ -449,7 +410,7 @@ app.MapPost("/category", [Authorize] async (string category, HttpContext context
 	{
 		try
 		{
-			await adapter.StartTransactionAsync(IsolationLevel.ReadUncommitted, "Insert Recipe");
+			await adapter.StartTransactionAsync(IsolationLevel.ReadUncommitted, "Insert Category");
 			var CategoryEntity = new CategoryEntity()
 			{
 				Name = category,
@@ -470,72 +431,72 @@ app.MapPost("/category", [Authorize] async (string category, HttpContext context
 	}
 });
 
-app.MapDelete("/categories/{category}", [Authorize] async (string category, HttpContext context, IAntiforgery forgeryService) =>
+app.MapDelete("/categories/{categoryId}", [Authorize] async (int categoryId, HttpContext context, IAntiforgery forgeryService) =>
 {
-	//await forgeryService.ValidateRequestAsync(context);
-
-	if (category == String.Empty)
+	if (categoryId == null)
 	{
 		return Results.BadRequest();
 	}
 
 	try
 	{
-		var categoryEntity = new CategoryEntity(category);
-		using (DataAccessAdapter adapter = new())
+		var adapter = new DataAccessAdapter();
+		await adapter.StartTransactionAsync(IsolationLevel.ReadUncommitted,"Delete Category");
+		var category = new CategoryEntity()
 		{
-			var q = qf.Category.Where(CategoryFields.Name == category);
-			categoryEntity = await adapter.FetchFirstAsync(q);
-			if (categoryEntity == null)
-				return Results.NotFound();
-			categoryEntity.IsActive = false;
-			if (!await adapter.SaveEntityAsync(categoryEntity))
-				throw new Exception("Could Not Save");
+			Id = categoryId,
+			IsNew = false,
+			IsActive = false
+		};
 
-			EntityCollection<RecipeCategoryEntity> recipeCategoryDictionaryEntities = new();
-			var qp = new QueryParameters()
+		await adapter.SaveEntityAsync(category, true);
+		adapter.Commit(); return Results.Ok();
+    }
+	catch (Exception)
+	{
+		return Results.Problem();
+	}
+});
+
+app.MapPut("/categories/{categoryId}", [Authorize] async (int categoryId, string editedCategory, HttpContext context, IAntiforgery forgeryService) =>
+{
+	//await forgeryService.ValidateRequestAsync(context);
+	if (editedCategory == null)
+	{
+		return Results.BadRequest();
+	}
+	using (DataAccessAdapter adapter = new())
+	{
+		await adapter.StartTransactionAsync(IsolationLevel.ReadUncommitted, "Put Category");
+
+		try
+		{
+			var entity = new CategoryEntity()
 			{
-				CollectionToFetch = recipeCategoryDictionaryEntities,
-				FilterToUse = RecipeCategoryFields.CategoryName == category
+				Id = categoryId,
+				Name = editedCategory,
+				IsNew = false
 			};
-			await adapter.FetchEntityCollectionAsync(qp, CancellationToken.None);
-			await adapter.DeleteEntityCollectionAsync(recipeCategoryDictionaryEntities);
-			return Results.Ok(category);
+
+			return Results.Ok(entity);
 		}
-	}
-	catch (Exception)
-	{
-		return Results.Problem();
-	}
-});
-
-app.MapPut("/categories/{category}", [Authorize] async (string category, string editedCategory, HttpContext context, IAntiforgery forgeryService) =>
-{
-	//await forgeryService.ValidateRequestAsync(context);
-	if (editedCategory == String.Empty)
-	{
-		return Results.BadRequest();
-	}
-
-	try
-	{
-		CategoryEntity categoryEntity;
-		using (DataAccessAdapter adapter = new())
+		catch (Exception)
 		{
-			var q = qf.Category.Where(CategoryFields.Name == category);
-			categoryEntity = await adapter.FetchFirstAsync(q);
-			if (categoryEntity == null || !categoryEntity.IsActive)
-				return Results.NotFound();
-			categoryEntity.Name = editedCategory;
-			if (!await adapter.SaveEntityAsync(categoryEntity))
-				throw new Exception("Failed to save");
+			return Results.Problem();
 		}
-		return Results.NoContent();
 	}
-	catch (Exception)
-	{
-		return Results.Problem();
-	}
+	
 });
+static void ConfigureLLBLGen(IServiceCollection services, IConfiguration config)
+{
+	var connectionString = config["ConnectionString"];
+	RuntimeConfiguration.AddConnectionString("ConnectionString.SQL Server (SqlClient)", connectionString);
+	RuntimeConfiguration.ConfigureDQE<SQLServerDQEConfiguration>(c =>
+	{
+		c.AddDbProviderFactory(typeof(SqlClientFactory));
+		c.SetTraceLevel(TraceLevel.Verbose);
+	});
 
+	services.AddScoped<DataAccessAdapter>();
+}
 app.Run();

@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.8" />
+    <PackageReference Include="Npgsql" Version="6.0.7" />
     <PackageReference Include="SD.LLBLGen.Pro.ORMSupportClasses" Version="5.9.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.3" />
@@ -17,10 +18,14 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Data\Code\DatabaseGeneric\DataProject.csproj" />
     <ProjectReference Include="..\..\Data\Code\DatabaseGeneric\Recipe.csproj" />
+    <ProjectReference Include="..\..\Data\Code\DatabaseGeneric\Shop.Data.csproj" />
     <ProjectReference Include="..\..\Data\Code\DatabaseSpecific\Recipe.DataDBSpecific.csproj" />
     <ProjectReference Include="..\..\Data\Code\DatabaseSpecific\RecipeDBSpecific.csproj" />
+    <ProjectReference Include="..\..\Data\Code\DatabaseSpecific\Shop.DataDBSpecific.csproj" />
+    <ProjectReference Include="..\..\Data\Code\View.Persistence\View.Persistence.csproj" />
     <ProjectReference Include="..\..\Data\Code\Views.Persistence\Views.Persistence.csproj" />
     <ProjectReference Include="..\..\Data\Code\Views\Views.csproj" />
+    <ProjectReference Include="..\..\Data\Code\View\View.csproj" />
   </ItemGroup>
 
   <ItemGroup>
